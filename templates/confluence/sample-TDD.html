@@ -1,0 +1,18 @@
+<h1>Technical Design Document</h1>
+<h2>CLAIMS-INBOUND-IMRIGHT-REST v1.0</h2>
+<ac:structured-macro ac:name="details">
+  <ac:rich-text-body>
+    <table><tbody>
+      <tr><th>Property</th><th>Value</th></tr>
+      <tr><td>Status</td><td><ac:structured-macro ac:name="status"><ac:parameter ac:name="colour">Yellow</ac:parameter><ac:parameter ac:name="title">DRAFT</ac:parameter></ac:structured-macro></td></tr>
+      <tr><td>Target Platform</td><td>Boomi AtomSphere + APIM — LTM Interop Layer</td></tr>
+    </tbody></table>
+  </ac:rich-text-body>
+</ac:structured-macro>
+<h2>1. Executive Summary</h2>
+<p>Migrates outbound REST calls to a Boomi process retrieving claim status from ImageRight, exposed via Boomi APIM with Entra ID JWT auth.</p>
+<h2>2. Data Mapping</h2>
+<table><tbody>
+  <tr><th>Source Field</th><th>Type</th><th>Target Field</th><th>Mapping Type</th></tr>
+  <tr><td>statusCode</td><td>Integer</td><td>status</td><td>Standard Function: Lookup 1→OPEN, 2→CLOSED</td></tr>
+</tbody></table>
