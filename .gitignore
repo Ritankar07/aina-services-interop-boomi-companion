@@ -1,0 +1,31 @@
+# Credentials — NEVER commit
+.env
+.env.local
+.env.*.local
+
+# Personal overrides — local only
+CLAUDE.local.md
+
+# Active branch state — local workspace state
+.active-branch.json
+
+# Activity log — local audit trail (opt-in)
+.activity-log/*.jsonl
+
+# Test data with payloads
+migration-output/test-cases/**/*.json
+migration-output/logs/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/settings.json
