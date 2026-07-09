@@ -368,11 +368,13 @@ Use `/marketplace` before migrating from source code — a recipe may serve as a
 |---|---|
 | `boomi_common.py` | Shared credential loading, auth headers, activity logging (imported by all others) |
 | `boomi_env_check.py` | Verify .env vars are set without revealing values; `--test-auth` for live check |
-| `boomi_deploy.py` | Deploy/update component + package + release, with auto-retry on validation errors |
+| `boomi_push.py` | **Push component XML to AtomSphere** (create/update only — no packaging or deployment) |
+| `boomi_deploy.py` | **Package + deploy** using `--component-id` from boomi_push.py (or `--file` for all-in-one) |
 | `boomi_pull.py` | Pull component XML + dependencies |
 | `boomi_logs.py` | Fetch execution records + download logs (with 204-retry for in-progress logs) |
 | `boomi_undeploy.py` | Remove deployed component from environment |
 | `boomi_folder.py` | Resolve/create AtomSphere folder by path |
 | `boomi_branch.py` | Branch create/list/set for version control |
+| `boomi_marketplace.py` | Search and install Marketplace recipes |
 | `confluence_push.py` | Push documentation to Confluence Cloud |
 | `scaffold.py` | Create new isolated project from this template |

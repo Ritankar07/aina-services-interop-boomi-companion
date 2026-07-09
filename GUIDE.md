@@ -20,11 +20,13 @@ Source Code (Java / .NET / Python)
         ↓
   /document + /unittest
         ↓
-  boomi_deploy.py --env STG
+  boomi_push.py --file [xml]                  ← push to Boomi account, get component ID
+        ↓
+  boomi_deploy.py --component-id [ID] --env STG   ← package + deploy to STG
         ↓
   test-fix-retest loop (see /debug)
         ↓
-  boomi_deploy.py --env PROD
+  boomi_deploy.py --component-id [ID] --env PROD
 ```
 
 ★ Skip Plan Mode only for simple single-process builds with clear 1:1 mappings.
@@ -66,11 +68,22 @@ If you want a deeper write-up on one specific AMBER API beyond its one-line scor
 ### 6. Document & Test
 `/document` asks document type and format. `/unittest` generates happy-path, null-field, boundary, and malformed-input test cases plus a Boomi Test mode checklist.
 
-### 7. Deploy
+### 7. Push + Deploy
+
+**Step 1 — Push to your Boomi account** (component appears in AtomSphere, no environment yet):
 ```bash
-python scripts/boomi_env_check.py --test-auth
-python scripts/boomi_deploy.py --file [...] --env STG
-python scripts/boomi_deploy.py --file [...] --env PROD
+python scripts/boomi_push.py --file migration-output/boomi-processes/[Name]/[Name].xml
+```
+Copy the **Component ID** printed in the output. Open AtomSphere → Component Explorer to review the component before deploying.
+
+**Step 2 — Deploy to STG** (package + release to environment):
+```bash
+python scripts/boomi_deploy.py --component-id [ID from Step 1] --env STG
+```
+
+After STG sign-off:
+```bash
+python scripts/boomi_deploy.py --component-id [ID] --env PROD
 ```
 
 ### Post-Deploy: Test-Fix-Retest
@@ -92,7 +105,9 @@ If it fails, run `/debug` — checks the known-error table first, then diagnosti
 | `/migrate` | 5 |
 | `/mapping` | 5b |
 | `/document` / `/unittest` | 6 |
-| `boomi_deploy.py --env STG` / `--env PROD` | 7 |
+| `boomi_push.py --file [xml]` | 7a — push component to Boomi account, get component ID |
+| `boomi_deploy.py --component-id [ID] --env STG` | 7b — package + deploy to STG |
+| `boomi_deploy.py --component-id [ID] --env PROD` | 7c — promote to PROD |
 | `/debug` | post-deploy |
 | `/pull-component` | modify existing components |
 | `/marketplace` | check before building from scratch |

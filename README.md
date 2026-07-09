@@ -85,7 +85,8 @@ python scripts/boomi_deploy.py --env PROD
 |---|---|
 | `boomi_common.py` | Shared credential loading, auth headers, activity logging |
 | `boomi_env_check.py` | Verify credentials without revealing values |
-| `boomi_deploy.py` | Deploy to AtomSphere with auto-retry on validation errors |
+| `boomi_push.py` | **Push component XML to Boomi account** (create/update — no deployment) |
+| `boomi_deploy.py` | **Package + deploy** using `--component-id` from boomi_push.py |
 | `boomi_undeploy.py` | Remove deployed component |
 | `boomi_pull.py` | Pull existing component XML |
 | `boomi_folder.py` | Resolve / create AtomSphere folder by path |

@@ -116,8 +116,29 @@ API Component name, path/methods, Entra ID JWT auth policy, linked process name.
 ## Output Instructions
 Save to `migration-output/boomi-processes/[ProcessName]/`: main process XML, connection stubs (NEW only), maps XML, APIM XML (if applicable), migration notes.
 
-After generating:
-> "Generation complete. Components match the approved plan. Run `/unittest` next, then deploy with `python scripts/boomi_deploy.py --file [...] --env STG`."
+After generating, tell the user:
+
+> "Generation complete. XML files are in `migration-output/boomi-processes/`.
+>
+> **Run these two commands in order:**
+>
+> **Step 1 — Push component to your Boomi account** (creates it in AtomSphere, no deployment yet):
+> ```
+> python scripts/boomi_push.py --file migration-output/boomi-processes/[ProcessName]/[ProcessName].xml
+> ```
+> This prints a **Component ID**. You can now open AtomSphere → Component Explorer and review the component before it goes anywhere near an environment.
+>
+> **Step 2 — Deploy to STG** (package + release to environment using the ID from Step 1):
+> ```
+> python scripts/boomi_deploy.py --component-id [ID from Step 1] --env STG
+> ```
+>
+> When STG is validated:
+> ```
+> python scripts/boomi_deploy.py --component-id [ID] --env PROD
+> ```
+>
+> Run `/unittest` to generate test cases before running Step 2."
 
 ---
 
@@ -126,5 +147,5 @@ After generating:
 After the user deploys to STG, offer to run the test loop:
 1. `python scripts/boomi_logs.py --process-name "[name]" --count 1 --download` to fetch the latest execution
 2. Review the log — confirm success, or diagnose failure using the known error patterns in copilot-instructions.md
-3. If a known fix applies, propose it and regenerate the XML; otherwise ask the user before guessing at structural changes
+3. If a known fix applies, propose it, regenerate the XML, re-push with `boomi_push.py`, then redeploy with `boomi_deploy.py --component-id`
 4. Repeat until passing, or escalate to `/debug` for the full tiered framework

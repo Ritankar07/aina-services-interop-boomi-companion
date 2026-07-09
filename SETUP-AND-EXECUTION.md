@@ -57,8 +57,16 @@ Add your existing AtomSphere connections (name, type, system, auth, environments
 
 Then in terminal:
 ```bash
-python scripts/boomi_deploy.py --file migration-output/boomi-processes/[Name]/[Name].xml --env STG
-python scripts/boomi_logs.py --process-name "[Name]" --count 1 --download
+# Step 1 — push the generated XML to your Boomi account (no deployment yet)
+python scripts/boomi_push.py --file migration-output/boomi-processes/[Name]/[Name].xml
+
+# Copy the Component ID from the output, then:
+
+# Step 2 — package + deploy to STG
+python scripts/boomi_deploy.py --component-id [ID from Step 1] --env STG
+
+# After STG validation:
+python scripts/boomi_deploy.py --component-id [ID] --env PROD
 ```
 If the test fails, run `/debug` in Copilot Chat with the log output pasted in.
 
