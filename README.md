@@ -33,8 +33,9 @@ Then in VS Code: **Settings → search `chat.promptFiles` → enable → restart
 | `/analyze` | Scan entire repo, discover APIs **and** score each one GREEN/AMBER/RED in one pass |
 | `/select-apis` | Pick which scored APIs to migrate **and** confirm the migration decision (YES MIGRATE) |
 | `/plan` | Full build blueprint before any XML is generated |
-| `/migrate` | Generate Boomi XML for the locked, approved scope (prompts for folder) |
-| `/push` | **Push generated components to Boomi account** — no deployment, review first |
+| `/migrate` | Generate XML files locally — shows what-next menu after |
+| `/push` | Upload components to Boomi account — shows what-next menu after |
+| `/deploy` | Package + deploy to STG or PROD — shows what-next menu after |
 | `/mapping` | Build or fix a Boomi Map component — standalone or auto-invoked by `/migrate` |
 | `/document` | TDD, Runbook, API Reference → Confluence or Markdown |
 | `/unittest` | Test cases + Boomi Test mode checklist |
@@ -69,13 +70,13 @@ Full reference: [`.env.template`](.env.template). Verify with `python scripts/bo
        ↓
      /plan → APPROVE PLAN
        ↓
-   /migrate  (asks for Boomi folder path, generates Map via /mapping logic)
-       ↓
-  /document + /unittest
-       ↓
-python scripts/boomi_deploy.py --env STG
-       ↓ (test-fix-retest loop, see /debug)
-python scripts/boomi_deploy.py --env PROD
+   /migrate  (generates XML locally)
+       ↓ shows: "What next? /push /document /unittest"
+   /push     (uploads to Boomi account)
+       ↓ shows: "What next? /deploy /document /unittest /debug"
+   /deploy   (package + deploy to STG then PROD)
+       ↓ shows: "What next? /debug /document /unittest"
+   /debug    (if something fails)
 ```
 
 ---

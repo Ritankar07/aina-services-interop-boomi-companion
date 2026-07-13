@@ -245,41 +245,43 @@ migration-output/boomi-processes/
 
 ---
 
-## Post-Generation Instructions
+## Post-Generation — Show What Next
 
-After ALL components pushed, tell the user:
+After ALL XML files are written to disk, output this menu exactly:
 
-> "All components are now in AtomSphere under [folder path].
->
-> **Mandatory next steps:**
->
-> 1. Configure Environment Extensions in AtomSphere:
->    Manage → Atom Management → select environment → Extensions tab
->    Set real values for: [list all EXT_ properties]
->
-> 2. Run /unittest to generate test cases
->
-> 3. Deploy the process:
->    ```
->    python scripts/boomi_deploy.py --component-id [PROCESS_ID] --env STG
->    ```
->
-> 4. Verify execution:
->    ```
->    python scripts/boomi_logs.py --process-name 'API_GET_Policy' --count 1 --download
->    ```
->
-> If the process fails, run /debug and share the log output."
+```
+╔══════════════════════════════════════════════════════════════╗
+║           ✅  COMPONENTS READY                               ║
+╚══════════════════════════════════════════════════════════════╝
+
+Generated files:
+  migration-output/boomi-processes/[API_Verb_Resource]/
+  [one line per API folder created]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WHAT WOULD YOU LIKE TO DO NEXT?
+
+  /push       Upload components to your Boomi account
+              (required before /deploy)
+
+  /document   Generate TDD, Runbook, API Reference, Confluence page
+
+  /unittest   Generate test cases and Boomi Test mode checklist
+
+Type a command to continue. Run /push first if you want to deploy.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+Do NOT include push commands, deploy commands, or component IDs in this output.
+Those steps are handled by /push and /deploy respectively.
 
 ---
 
-## Post-Deploy: Test-Fix-Retest
+## Post-Deploy: Test-Fix-Retest (if /deploy was run and a step fails)
 
-If execution fails:
+If the user reports a failure after deploying:
 1. Fetch logs: `python scripts/boomi_logs.py --process-name "[name]" --count 1 --download`
-2. Match error to `references/boomi_error_reference.md`
-3. Fix the specific component that is wrong
-4. Re-push ONLY the changed component: `python scripts/boomi_push.py --file [changed.xml]`
-5. If the changed component is a subprocess, also re-push and redeploy the parent
-6. Redeploy: `python scripts/boomi_deploy.py --component-id [ID] --env STG`
-7. Re-run logs to verify
+2. Match error to `references/guides/boomi_error_reference.md`
+3. Fix the specific component XML file on disk
+4. Re-run `/push` to sync the fix to the platform
+5. Re-run `/deploy` to redeploy

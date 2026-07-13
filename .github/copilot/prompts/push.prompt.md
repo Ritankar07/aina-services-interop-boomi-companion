@@ -159,43 +159,44 @@ python scripts/boomi_push.py \
 
 ---
 
-## Step 5: Confirm and Report
+## Step 5: Confirm and Show What Next
 
-After the push commands complete, ask the user to share the output. Then
-summarise the result:
+After the push commands complete, ask the user to share the terminal output.
+Summarise the result and show the what-next menu:
 
 ```
-╔══════════════════════════════════════════════════════════╗
-║              📤  PUSH COMPLETE                           ║
-╚══════════════════════════════════════════════════════════╝
+PUSH COMPLETE
 
-Components pushed to AtomSphere:
-  ✅ API_GET_Policy          Component ID: [id]   (created)
-  ✅ CONN_Guidewire          Component ID: [id]   (updated)
-  ✅ MAP_Request_TO_GWPolicy Component ID: [id]   (created)
-  ✅ Policy_Request_JSON     Component ID: [id]   (created)
-  ❌ API_POST_Policy.xml     BLOCKED — unfilled PLACEHOLDER_ tokens
+Components now in AtomSphere ([folder path]):
+  OK  API_GET_Policy          Component ID: [id]   (created)
+  OK  CONN_Guidewire          Component ID: [id]   (updated)
+  OK  MAP_Request_TO_GWPolicy Component ID: [id]   (created)
+  OK  Policy_Request_JSON     Component ID: [id]   (created)
+  ERR API_POST_Policy.xml     BLOCKED - unfilled PLACEHOLDER_ tokens
 
-Folder: [path]  ([Folder ID])
+Save these Component IDs for /deploy.
 
-══════════════════════════════════════════════════════════
-WHAT HAPPENS NEXT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WHAT WOULD YOU LIKE TO DO NEXT?
 
-Components are now visible in AtomSphere → Component Explorer.
+  /deploy     Deploy the process to STG or PROD
+              (package + release to a runtime environment)
 
-Review them there before deploying. When ready:
+  /document   Generate TDD, Runbook, API Reference, Confluence page
 
-  Deploy to STG:
-  python scripts/boomi_deploy.py --component-id [ID] --env STG
+  /unittest   Generate test cases and Boomi Test mode checklist
 
-  Deploy to PROD (after STG sign-off):
-  python scripts/boomi_deploy.py --component-id [ID] --env PROD
+  /debug      Fetch execution logs if the process fails after deploy
 
-Save your component IDs — you will need them for the deploy step.
-══════════════════════════════════════════════════════════
+Type a command to continue.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
+
+If any were BLOCKED (unfilled PLACEHOLDER_ tokens):
+Fix the PLACEHOLDER_ values in the XML file on disk, then re-run /push for that file only.
 
 ---
+
 
 ## What This Command Does NOT Do
 

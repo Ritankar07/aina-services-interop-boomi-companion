@@ -4,113 +4,106 @@
 
 ```
 Source Code (Java / .NET / Python)
-        ↓
-  /repo-connect    ← establish workspace
-        ↓
-  /analyze         ← @workspace scan + GREEN/AMBER/RED scoring, ONE combined pass
-        ↓
-  /select-apis     ← user picks from the SCORED list, then confirms YES MIGRATE
-        ↓
-  /plan ★          ← full build blueprint (recommended >3 components or any AMBER)
-        ↓
-   APPROVE PLAN
-        ↓
-  /migrate         ← prompts for Boomi folder path, generates XML
-        │             (Map components built via /mapping logic)
-        ↓
-  /document + /unittest
-        ↓
-  boomi_push.py --file [xml]                  ← push to Boomi account, get component ID
-        ↓
-  boomi_deploy.py --component-id [ID] --env STG   ← package + deploy to STG
-        ↓
-  test-fix-retest loop (see /debug)
-        ↓
-  boomi_deploy.py --component-id [ID] --env PROD
+        |
+  /repo-connect    <- establish workspace
+        |
+  /analyze         <- scan repo + score every API GREEN/AMBER/RED
+        |
+  /select-apis     <- pick from scored list, confirm YES MIGRATE
+        |
+  /plan            <- full build blueprint -> APPROVE PLAN
+        |
+  /migrate         <- generates XML files locally
+        |              then shows: "What next? /push /document /unittest"
+        |
+  /push            <- uploads components to Boomi account
+        |              then shows: "What next? /deploy /document /unittest /debug"
+        |
+  /deploy          <- packages + deploys to STG (then PROD after validation)
+        |              then shows: "What next? /debug /document /unittest"
+        |
+  /debug           <- fetch logs, diagnose, fix -> /push -> /deploy again
 ```
 
-★ Skip Plan Mode only for simple single-process builds with clear 1:1 mappings.
-
-> Honest constraint: Copilot is conversational, not autonomous — each phase is a chat command you invoke. `YES MIGRATE` and `APPROVE PLAN` are literal human gates. The test-fix-retest retry loop within `/debug` is automated; moving between major phases is not.
+Optional at any point in any order:
+  /document  Generate TDD, Runbook, Confluence page
+  /unittest  Generate test cases and Boomi Test mode checklist
+  /mapping   Build or fix a Map component standalone
 
 ---
 
-## Why Analyze and Feasibility Are Now Combined
+## Why the Flow Is Split This Way
 
-Earlier versions of this workflow ran discovery (`/analyze`) and feasibility scoring (`/feasibility`) as two separate steps, with scoring happening only AFTER API selection. That meant you picked APIs blind, then found out their feasibility afterward — backwards from how you'd actually want to decide.
+| Step | What it does | Why separate |
+|---|---|---|
+| /migrate | Creates XML files on your disk | Review before touching the platform |
+| /push | Uploads components to Boomi account | Review in AtomSphere UI before deploying |
+| /deploy | Packages + deploys to an environment | Explicit environment selection (STG/PROD) |
 
-Now `/analyze` does both in one pass: every discovered API gets a GREEN/AMBER/RED score immediately, in the same list. `/select-apis` then lets you pick from that scored list — including shortcuts like "ALL GREEN" or "GREEN AND AMBER" — and captures the `YES MIGRATE` decision as part of confirming your selection. No separate gate, no blind picking.
-
-If you want a deeper write-up on one specific AMBER API beyond its one-line score, `/feasibility-detail` is still available as an optional standalone command — it does not change your locked scope.
+Each step shows a menu of what to do next so you always know the path forward.
 
 ---
 
 ## Phase-by-Phase
 
-### 1. Repo Connect
-`/repo-connect` — clone/open the source repo, confirm Copilot can see it via `@workspace`.
+### 1. /repo-connect
+Connect to the source code repo. Provides `git clone` instructions or confirms
+@workspace can see an already-open folder.
 
-### 2. Analyze (discovery + feasibility combined)
-`/analyze` — full repo scan. Outputs a numbered, GREEN/AMBER/RED-scored inventory of every REST endpoint, scheduled job, and event consumer, with a Boomi component mapping and risk note per item.
+### 2. /analyze
+Scans the ENTIRE repo. Every API endpoint gets scored GREEN/AMBER/RED inline.
+No separate feasibility step needed.
 
-### 3. Select APIs + Decide
-`/select-apis` — pick a subset by number, range, service name, "ALL", or by score ("ALL GREEN", "GREEN AND AMBER"). After confirming the selection, you're immediately asked the migration decision: `YES MIGRATE` / `YES MIGRATE GREEN ONLY` / `NO STOP`. This locks the scope for everything downstream.
+### 3. /select-apis
+Pick from the scored list (by number, range, "ALL GREEN", etc.).
+Confirms migration scope with YES MIGRATE. Gates everything downstream.
 
-### 4. Plan Mode
-`/plan` — shows folder structure, connections (REUSE from `preferred_connections.md` vs CREATE), profiles, map components, process shapes in order, deployment target, and a risk summary. Iterate with `MODIFY PLAN: [changes]` until `APPROVE PLAN`.
+### 4. /plan
+Previews every component to be created: folder structure, connections (REUSE vs CREATE),
+profiles, maps, process shapes. Type APPROVE PLAN when satisfied.
 
-### 5. Migrate
-`/migrate` — checks the locked+approved scope, then asks for the Boomi folder path (or "default" to use `BOOMI_TARGET_FOLDER`). Generates process XML, connection stubs (CREATE only), Map components (using the verified Mapping Skill rules), and migration notes.
+### 5. /migrate
+Reads the official reference files for each component and step type, then generates
+the XML files locally — one subfolder per API under migration-output/boomi-processes/.
+After generation shows: /push /document /unittest
 
-### 5b. Mapping (standalone or auto-invoked)
-`/mapping` — dedicated skill for building or debugging a Map component: field mapping matrix, default-value rules, Standard/User-Defined/Custom-Script function selection, Cross Reference Tables, Map Extensions.
+### 6. /push
+Uploads the generated XML to your Boomi account. Returns component IDs.
+After push shows: /deploy /document /unittest /debug
 
-### 6. Document & Test
-`/document` asks document type and format. `/unittest` generates happy-path, null-field, boundary, and malformed-input test cases plus a Boomi Test mode checklist.
+### 7. /deploy
+Takes a component ID from /push and deploys it to STG or PROD.
+After deploy shows: /debug /document /unittest
 
-### 7. Push + Deploy
+### Optional: /document
+Generates TDD, Integration Spec, Runbook, Migration Record, API Reference, or Full Pack.
+Pushes to Confluence or outputs Markdown.
 
-**Step 1 — Push to your Boomi account** (component appears in AtomSphere, no environment yet):
-```bash
-python scripts/boomi_push.py --file migration-output/boomi-processes/[Name]/[Name].xml
-```
-Copy the **Component ID** printed in the output. Open AtomSphere → Component Explorer to review the component before deploying.
+### Optional: /unittest
+Generates test data files and a Boomi Test mode step-by-step checklist.
 
-**Step 2 — Deploy to STG** (package + release to environment):
-```bash
-python scripts/boomi_deploy.py --component-id [ID from Step 1] --env STG
-```
-
-After STG sign-off:
-```bash
-python scripts/boomi_deploy.py --component-id [ID] --env PROD
-```
-
-### Post-Deploy: Test-Fix-Retest
-```bash
-python scripts/boomi_logs.py --process-name "[name]" --count 1 --download
-```
-If it fails, run `/debug` — checks the known-error table first, then diagnostic steps, platform docs, escalation.
+### /debug (when things go wrong)
+Fetches execution logs, matches errors against the official Boomi error reference,
+suggests fixes. Fix the XML on disk, re-run /push, re-run /deploy.
 
 ---
 
 ## Quick Reference
 
-| Command | Phase |
+| Command | What It Does |
 |---|---|
-| `/repo-connect` | 1 |
-| `/analyze` | 2 — discovery + scoring combined |
-| `/select-apis` | 3 — selection + YES MIGRATE decision combined |
-| `/plan` then `APPROVE PLAN` | 4 |
-| `/migrate` | 5 |
-| `/mapping` | 5b |
-| `/document` / `/unittest` | 6 |
-| `/push` | 6b — push generated XML to Boomi account, get component IDs, no deployment |
-| `boomi_push.py --file [xml]` | 7a — push component to Boomi account, get component ID |
-| `boomi_deploy.py --component-id [ID] --env STG` | 7b — package + deploy to STG |
-| `boomi_deploy.py --component-id [ID] --env PROD` | 7c — promote to PROD |
-| `/debug` | post-deploy |
-| `/pull-component` | modify existing components |
-| `/marketplace` | check before building from scratch |
-| `/feasibility-detail` | optional — deep dive on one API, doesn't change scope |
-| `/tidy` | workspace cleanup |
+| /repo-connect | Connect to the source code repo |
+| /analyze | Scan repo and score every API GREEN/AMBER/RED |
+| /select-apis | Pick APIs to migrate and confirm YES MIGRATE |
+| /plan | Build blueprint -> APPROVE PLAN |
+| /migrate | Generate XML files locally -> shows what-next menu |
+| /push | Upload components to Boomi account -> shows what-next menu |
+| /deploy | Package + deploy to STG or PROD -> shows what-next menu |
+| /document | Generate documentation (any type, any format) |
+| /unittest | Generate test cases and checklist |
+| /debug | Diagnose failures from execution logs |
+| /mapping | Build or fix a Map component standalone |
+| /pull-component | Pull and modify existing AtomSphere components |
+| /marketplace | Search Boomi Marketplace before building from scratch |
+| /feasibility-detail | Optional deep-dive on one API (does not change scope) |
+| /tidy | Clean workspace artifacts |
