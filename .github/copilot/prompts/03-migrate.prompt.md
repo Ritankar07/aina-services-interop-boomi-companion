@@ -1,116 +1,183 @@
-# Generate Boomi Process Components
+# Generate Boomi Components — Push-As-You-Go Workflow
 
 ## Mode
-Migration — Steps 5-6 of 6
+Migration — Steps 5–7 of 7
 
-## Pre-flight Checks (run ALL in order)
+## CRITICAL: Read These Before Generating Any XML
 
-**Check 1 — Scope locked AND approved?** Is `SELECTED APIs — MIGRATION SCOPE LOCKED` present, containing `YES MIGRATE` or `YES MIGRATE GREEN ONLY`?
-- NO → "Run /select-apis first — it scores APIs, lets you select, and captures the migration decision in one flow." STOP.
+Before generating ANY component XML, read the files listed below for each component type
+you are about to create. If a file doesn't exist yet, run `python scripts/clone_boomi_references.py` first.
 
-**Check 2 — Plan Mode?** `APPROVE PLAN` present?
-- YES → use the approved plan as the authoritative component list/names/shapes.
-- NO → if build is complex (>3 components or any AMBER): "⚠️ Complex build — run /plan first, or type SKIP PLAN to proceed without it."
-- NO + simple build → proceed, note "No approved plan — generating from analysis context."
+**Always read first (every time):**
+- `references/BOOMI_THINKING.md`
+- `references/boomi_error_reference.md`
 
-**Check 3 — Connection reuse**: cross-reference `preferred_connections.md`. Apply REUSE decisions from the plan — only generate stubs for CREATE connections.
+**Then read the specific file for each component you're creating:**
 
-**Check 4 — Scope confirmation**: state "I will generate components for: [list]." before proceeding.
+| Component to create | File to read |
+|---|---|
+| Process | `references/components/process_component.md` |
+| JSON Profile | `references/components/json_profile_component.md` |
+| XML Profile | `references/components/xml_profile_component.md` |
+| REST Connection | `references/components/rest_connection_component.md` |
+| REST Operation | `references/components/rest_connector_operation_component.md` |
+| Map | `references/components/map_component.md` + `references/components/map_component_functions.md` |
+| Document Cache | `references/components/document_cache_component.md` |
+| Cross Reference | `references/components/cross_reference_table_component.md` |
+| Process Property | `references/components/process_property_component.md` |
+
+**And the specific step file for each step in your process:**
+
+| Step type | File to read |
+|---|---|
+| Start | `references/steps/start_step.md` |
+| REST Connector | `references/steps/rest_connector_step.md` |
+| Map | `references/steps/map_step.md` |
+| Message | `references/steps/message_step.md` |
+| Set Properties | `references/steps/set_properties_step.md` |
+| Decision | `references/steps/decision_step.md` |
+| Try/Catch | `references/steps/try_catch_step.md` |
+| Notify | `references/steps/notify_step.md` |
+| Return Documents | `references/steps/return_documents_step.md` |
+| Process Call | `references/steps/process_call_step.md` |
+| Data Process/Groovy | `references/steps/data_process_step.md` + `references/steps/data_process_groovy_step.md` |
+| Branch | `references/steps/branch_step.md` |
+| Route | `references/steps/route_step.md` |
+| Exception | `references/steps/exception_step.md` |
+
+**Rule:** READ BEFORE WRITING. Validation errors almost always mean the XML doesn't match the documented structure. The reference file for that component or step type has the working example.
 
 ---
 
-## ★ Check 5 — Boomi Folder Path (always runs, even for simple builds)
+## Pre-flight Checks
 
+**Check 1 — Scope locked and approved?**
+`SELECTED APIs — MIGRATION SCOPE LOCKED` with `YES MIGRATE` present?
+- NO → "Run /select-apis first." STOP.
+
+**Check 2 — Plan approved?**
+`APPROVE PLAN` present?
+- YES → use it as the authoritative component list.
+- NO + complex build (>3 components or any AMBER) → "Run /plan first, or type SKIP PLAN."
+
+**Check 3 — Folder confirmed?**
+Ask:
 ```
 📁 BOOMI FOLDER PATH — REQUIRED
 
-Where in AtomSphere should the generated components be placed?
-Examples: CLAIMS/INBOUND  ·  Interop Layer/Migration/June2026
+Where in AtomSphere should these components be placed?
+Example: Policy Management/REST APIs
 
-If you leave this blank, I will use BOOMI_TARGET_FOLDER from .env as the default.
-Type the folder path, or "default" to use BOOMI_TARGET_FOLDER: _
+Or type "default" to use BOOMI_TARGET_FOLDER from .env.
+
+Folder path: _
 ```
-
-Wait for response. If "default" → tell user this resolves to whatever `BOOMI_TARGET_FOLDER` is set to in `.env` (the deploy script handles this automatically — no path resolution needed).
-
-If a custom path is given:
+If custom path given:
 ```bash
-python scripts/boomi_folder.py --path "[user input]" --create-if-missing
+python scripts/boomi_folder.py --path "[path]" --create-if-missing
 ```
-Ask the user to paste the returned folder ID back into chat, then confirm:
-```
-✅ Folder confirmed: [user path]   Folder ID: [resolved ID]
-   All components will be created in this folder.
-```
+Paste the Folder ID back. Confirm before proceeding.
 
-Only proceed to XML generation after folder is confirmed (or default explicitly chosen).
+**Check 4 — Connection reuse**
+Check `preferred_connections.md`. REUSE connections are NOT generated — just note their GUID.
 
 ---
 
-## What to Generate Per Module
+## The Only Correct Build Order
 
-### 1. Process Component XML
-- Valid `type="process"` XML, named `[DOMAIN]-[DIRECTION]-[SYSTEM]-[TYPE]`
-- `folderId` attribute present — use the ID from Check 5 (or leave as `PLACEHOLDER_FOLDER_ID` if default/BOOMI_TARGET_FOLDER was chosen, since the deploy script injects it automatically)
-- All credentials = `PLACEHOLDER_[TYPE]`
-- **Every shape has `<dragpoints>`** — this is mandatory, not optional
-- XML comments on non-obvious shapes
+**Follow this order without exception. Never skip a level.**
 
-### 2. Connection Component Stub
-Only for connections marked CREATE. For REUSE connections, add a note instead:
-> `CONN_[System]: REUSE existing — pulled via boomi_pull.py before importing the process.`
-
-```xml
-<!-- CONNECTION STUB: Complete credentials in AtomSphere before use -->
-<!-- Not found in preferred_connections.md -->
-<bns:Component name="CONN_[System]" type="connection">
-  <!-- Credentials: PLACEHOLDER_[TYPE] -->
-</bns:Component>
+```
+Level 1: PROFILES        — push first, capture GUIDs
+Level 2: CONNECTIONS     — push second, use profile GUIDs if needed
+Level 3: OPERATIONS      — push third, reference connection + profile GUIDs
+Level 4: MAPS            — push fourth, reference source + target profile GUIDs
+Level 5: PROCESS         — push last, reference connection + operation + map GUIDs
+Level 6: DEPLOY          — after all components exist on platform
 ```
 
-### 3. Map Component Definition
-Apply the Mapping Skill from copilot-instructions.md:
-- Source profile, destination profile, field mapping table
-- Mark each destination field's source as ONE of: direct source mapping, default value (used only if source null/blank), or always-default (no source mapped)
-- List any functions needed (Standard vs User-Defined vs Custom Script) — flag Custom Script as last resort
-- If Date/Number fields map directly without a function, confirm both profile steps are typed correctly so Boomi auto-formats
+---
 
-### 4. APIM Definition (if source exposed REST endpoints)
-API Service name: `<Domain> <API Name> API`
-API Proxy name: `<API Name> Proxy`
-Linked process: follows main process naming `API_<Verb>_<Resource>`
-Auth policy: Entra ID JWT (standard Interop Layer)
+## What to Generate Per API
 
-### 5. Migration Notes File
-```markdown
-# Migration Notes: [ProcessName]
-**Source**: [file/class]   **API Endpoint(s)**: [method + path]
-**Migration Date**: [date]   **Approved Plan**: [present/absent]
-**Boomi Folder**: [path or "BOOMI_TARGET_FOLDER default"]   **Folder ID**: [resolved or PLACEHOLDER]
+For each selected API, work through the levels in order.
 
-## What Changed / What Was Excluded
-## Connections: Reuse vs Created
-## Manual Steps Required
-- [ ] For REUSE connections: pull via boomi_pull.py before importing
-- [ ] For CREATE connections: fill PLACEHOLDER_* credentials in AtomSphere Extensions
-- [ ] Import connections → profiles → maps → process, in that order
-- [ ] Run test in Test mode before promoting to STG
+### Level 1: Profiles
 
-## Groovy Scripts (if any)
-[script name, purpose, Groovy 2.4 constraint notes — confirm no external network calls]
+Create ONE profile per data structure involved. Name: `<Entity>_<Direction>_<Format>`.
 
-## Known Gaps vs Original Code
-## Validation Checklist
-- [ ] All component names comply with the naming convention table
-- [ ] All shapes match approved plan shape list and have <dragpoints>
-- [ ] No PLACEHOLDER_ tokens remain before pushing/deploying
+For each profile:
+1. Generate the profile XML (see `references/boomi_component_guide.md`)
+2. Tell the user:
+```bash
+python scripts/boomi_push.py \
+  --file migration-output/boomi-processes/API_GET_Policy/Policy_Request_JSON.xml \
+  --folder-id [FOLDER_ID]
+```
+3. Ask user to paste the **Component ID** returned
+4. Record: `Policy_Request_JSON → componentId: [pasted-id]`
+5. Repeat for every profile
+
+**Do not proceed to Level 2 until all profile IDs are confirmed.**
+
+### Level 2: Connections
+
+For REUSE connections (from `preferred_connections.md`):
+- Ask user to pull the existing connection: `python scripts/boomi_pull.py --name "CONN_SystemName"`
+- Capture the componentId from the pulled XML
+- Do NOT generate new XML for REUSE connections
+
+For CREATE connections:
+1. Generate connection XML with empty credential fields (never fill credentials into XML)
+2. Push and capture component ID
+3. Tell user: "After all components are pushed, configure credentials in AtomSphere → Environment Extensions"
+
+### Level 3: Operations
+
+Generate operation XML using:
+- Real connection GUID from Level 2
+- Real profile GUIDs from Level 1 (for request/response profiles)
+
+Push and capture component ID.
+
+### Level 4: Maps
+
+Generate map XML using:
+- Real source profile GUID from Level 1
+- Real target profile GUID from Level 1
+
+Apply mapping rules from `references/boomi_component_guide.md`:
+- `<map mapId="ACTUAL_GUID"/>` — no child elements
+- One destination field = one source connection only
+
+Push and capture component ID.
+
+### Level 5: Process
+
+Generate process XML using ONLY real GUIDs captured from levels 1-4.
+**No PLACEHOLDER values. No made-up GUIDs. Only real IDs from pushed components.**
+
+Apply structural rules from `references/boomi_component_guide.md`:
+- Every step has `<dragpoints>`
+- Message step with JSON: single-quote escaping (`'{"key":"'{1}'"}'`)
+- Set Properties: `shapetype="documentproperties"` NOT `"setproperties"`
+- Map step: `<map mapId="guid"/>` with no child elements
+- Decision: `equals`/`notequals` operators only — no isempty/isnotempty/contains
+
+Push and capture component ID.
+
+### Level 6: Deploy
+
+After all components for ALL selected APIs are pushed:
+```bash
+python scripts/boomi_deploy.py --component-id [PROCESS_ID] --env STG
 ```
 
 ---
 
 ## Component Naming Convention
 
-Apply these to EVERY component name generated. Flag and correct any name that doesn't conform before writing the XML.
+Apply to EVERY component generated:
 
 | Component | Pattern | Example |
 |---|---|---|
@@ -122,85 +189,97 @@ Apply these to EVERY component name generated. Flag and correct any name that do
 | **Map** | `MAP_<Source>_TO_<Target>` | `MAP_Request_TO_GWPolicy` |
 | **XML/JSON Profile** | `<Entity>_<Direction>_<Format>` | `Policy_Request_JSON` |
 | **Connection** | `CONN_<System>` | `CONN_Guidewire` |
-| **Operation** | `<Action>_<Object>` | `GET_Policy`, `UPSERT_Claim` |
+| **Operation** | `<Action>_<Object>` | `GET_Policy` |
 | **Process Property** | `PP_<Purpose>` | `PP_API_Config` |
 | **Environment Extension** | `EXT_<Property>` | `EXT_BaseURL` |
 | **Cross Reference Table** | `XREF_<Source>_<Target>` | `XREF_ProductCode` |
 | **Document Cache** | `CACHE_<Purpose>` | `CACHE_AccessToken` |
 
-Direction values for profiles: `Request`, `Response`, `Inbound`, `Outbound`
-Format values for profiles: `JSON`, `XML`, `CSV`, `Flat`
-Verb values for processes: `GET`, `POST`, `PUT`, `DELETE`, `PATCH`, `UPSERT`, `PROCESS`
+---
 
-## Output Instructions
-
-### Folder Structure Rule — One Folder Per API
-
-Every API selected for migration gets its own dedicated subfolder named after its main process (following the `API_<Verb>_<Resource>` naming convention). This ensures files from different migration runs never overwrite each other.
+## Output Folder Structure — One Folder Per API
 
 ```
-migration-output/
-└── boomi-processes/
-    ├── API_GET_Policy/                  ← one folder per migrated API
-    │     API_GET_Policy.xml             ← main process
-    │     CONN_Guidewire.xml             ← connection stub (CREATE only)
-    │     Policy_Request_JSON.xml        ← input profile
-    │     Policy_Response_JSON.xml       ← output profile
-    │     MAP_Request_TO_GWPolicy.xml    ← map component
-    │     Policy_Management_API.xml      ← APIM service (if applicable)
-    │     Policy_Proxy.xml               ← APIM proxy (if applicable)
-    │     API_GET_Policy-MIGRATION-NOTES.md
-    │
-    ├── API_POST_Policy/                 ← second API — its own folder
-    │     API_POST_Policy.xml
-    │     MAP_CreateRequest_TO_GWPolicy.xml
-    │     Policy_Create_Request_JSON.xml
-    │     API_POST_Policy-MIGRATION-NOTES.md
-    │
-    └── API_GET_Claim/                   ← third API — its own folder
-          API_GET_Claim.xml
-          ...
+migration-output/boomi-processes/
+└── API_GET_Policy/
+      API_GET_Policy.xml            ← Level 5 (process)
+      Policy_Request_JSON.xml       ← Level 1 (profile)
+      Policy_Response_JSON.xml      ← Level 1 (profile)
+      CONN_Guidewire.xml            ← Level 2 (connection — CREATE only)
+      GET_Policy.xml                ← Level 3 (operation)
+      MAP_Request_TO_GWPolicy.xml   ← Level 4 (map)
+      API_GET_Policy-MIGRATION-NOTES.md
 ```
-
-**Rules:**
-- The subfolder name = the main process name (e.g. `API_GET_Policy/`)
-- One subfolder per API, always — even if two APIs share a connection
-- Connection stubs marked **REUSE**: do NOT generate an XML file — add a note in migration notes only
-- Connection stubs marked **CREATE**: generate once in the first API that needs them; subsequent APIs reference the same component — note this in their migration notes
-- Running `/migrate` again for new APIs adds new subfolders — it does NOT overwrite or delete existing ones
-
-Save all files for each API directly into its named subfolder before moving to the next API.
-
-After generating all APIs, tell the user:
-
-> "Generation complete. Each API has its own folder in `migration-output/boomi-processes/`:
->
-> ```
-> migration-output/boomi-processes/
->   API_GET_Policy/
->   API_POST_Policy/
->   API_GET_Claim/
-> ```
->
-> **Run `/push` to push all generated components to your Boomi account** (requires `YES MIGRATE` and `APPROVE PLAN` to be active in this conversation).
->
-> Or push individually from the terminal:
-> ```
-> python scripts/boomi_push.py --folder migration-output/boomi-processes/API_GET_Policy/
-> python scripts/boomi_push.py --folder migration-output/boomi-processes/API_POST_Policy/
-> ```
->
-> Then deploy each pushed component:
-> ```
-> python scripts/boomi_deploy.py --component-id [ID] --env STG
-> ```"
 
 ---
 
-## Post-Generation: Test-Fix-Retest
+## Migration Notes File
 
-After the user deploys to STG, offer to run the test loop:
-1. `python scripts/boomi_logs.py --process-name "[name]" --count 1 --download` to fetch the latest execution
-2. Review the log — confirm success, or diagnose failure using the known error patterns in copilot-instructions.md
-3. If a known fix applies, propose it, regenerate the XML, re-push with `boomi_push.py`, then redeploy with `boomi_deploy.py --component-id`
-4. Repeat until passing, or escalate to `/debug` for the full tiered framework
+```markdown
+# Migration Notes: [API_Verb_Resource]
+**Source**: [file/class + endpoint]   **Migration Date**: [date]
+**Boomi Folder**: [path]              **Folder ID**: [real GUID]
+
+## Component IDs (record after each push)
+| Component | Type | ID |
+|---|---|---|
+| Policy_Request_JSON | profile.json | [real GUID] |
+| Policy_Response_JSON | profile.json | [real GUID] |
+| CONN_Guidewire | connector-settings | [real GUID or REUSE] |
+| GET_Policy | connector-action | [real GUID] |
+| MAP_Request_TO_GWPolicy | transform.map | [real GUID] |
+| API_GET_Policy | process | [real GUID] |
+
+## Connections
+- REUSE: [list from preferred_connections.md with GUIDs]
+- CREATED: [list new with push order]
+
+## Environment Extensions Required
+- CONN_Guidewire → baseUrl: EXT_GuidewireBaseURL
+- CONN_Guidewire → apiKey: EXT_GuidewireAPIKey
+(Configure these in AtomSphere → Environment → Extensions after push)
+
+## Known Gaps vs Original Code
+[Honest list of anything not fully replicated]
+```
+
+---
+
+## Post-Generation Instructions
+
+After ALL components pushed, tell the user:
+
+> "All components are now in AtomSphere under [folder path].
+>
+> **Mandatory next steps:**
+>
+> 1. Configure Environment Extensions in AtomSphere:
+>    Manage → Atom Management → select environment → Extensions tab
+>    Set real values for: [list all EXT_ properties]
+>
+> 2. Run /unittest to generate test cases
+>
+> 3. Deploy the process:
+>    ```
+>    python scripts/boomi_deploy.py --component-id [PROCESS_ID] --env STG
+>    ```
+>
+> 4. Verify execution:
+>    ```
+>    python scripts/boomi_logs.py --process-name 'API_GET_Policy' --count 1 --download
+>    ```
+>
+> If the process fails, run /debug and share the log output."
+
+---
+
+## Post-Deploy: Test-Fix-Retest
+
+If execution fails:
+1. Fetch logs: `python scripts/boomi_logs.py --process-name "[name]" --count 1 --download`
+2. Match error to `references/boomi_error_reference.md`
+3. Fix the specific component that is wrong
+4. Re-push ONLY the changed component: `python scripts/boomi_push.py --file [changed.xml]`
+5. If the changed component is a subprocess, also re-push and redeploy the parent
+6. Redeploy: `python scripts/boomi_deploy.py --component-id [ID] --env STG`
+7. Re-run logs to verify

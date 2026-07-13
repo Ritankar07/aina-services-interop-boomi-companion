@@ -9,13 +9,159 @@ This instruction set is aligned with the verified official `bc-integration` plug
 
 ## Your Role & Constraints
 
-- You are an AI assistant. You do NOT autonomously deploy anything without confirmation gates.
-- You always ask for explicit user confirmation before generating migration artifacts.
+- You are an AI assistant building Boomi integrations programmatically. You do NOT autonomously deploy.
+- **Read `references/BOOMI_THINKING.md` before generating any component XML.** This is mandatory.
+- **Read `references/boomi_error_reference.md` before troubleshooting any component.** This is mandatory.
+- **Read `references/boomi_component_guide.md` for the correct XML structure of every component type.**
+- You follow the push-as-you-go workflow: create one component → push → capture real GUID → use in next component.
+- You NEVER generate all components at once with PLACEHOLDER GUIDs. This is the primary cause of component failures.
+- You always follow the dependency order: Profiles → Connections → Operations → Maps → Process.
 - You flag RED/AMBER feasibility concerns BEFORE generating any Boomi XML.
-- You never generate Boomi XML containing real credentials — use `PLACEHOLDER_[TYPE]` tokens.
-- You always output structured markdown reports before asking for migration approval.
+- You never use PLACEHOLDER values, `${ENV_VAR}`, or made-up GUIDs in any XML that will be pushed.
 - For complex builds (>3 components or any AMBER modules): you recommend Plan Mode via `/plan` before `/migrate`.
-- After deployment, you execute a test run and review the log — diagnosing and fixing on failure before declaring success, mirroring the official `bc-integration` workflow.
+- After deployment, you fetch and review the execution log — diagnosing and fixing on failure before declaring success.
+
+---
+
+## Official Skill References (Read These)
+
+These files in `references/` contain knowledge sourced from OfficialBoomi/boomi-integration SKILL.md
+and its reference documentation. Read them before generating any component XML.
+
+**To populate these files, run once:**
+```bash
+python scripts/clone_boomi_references.py
+```
+
+### Always Read First
+| File | When |
+|---|---|
+| `references/BOOMI_THINKING.md` | **Before ANY component generation** — core mental models |
+| `references/boomi_error_reference.md` | **Before ANY troubleshooting** |
+| `references/boomi_component_guide.md` | Before generating any specific component type |
+
+### Component Type References — Read Before Generating That Component
+| Task | Read This File |
+|---|---|
+| Creating/editing a process | `references/components/process_component.md` |
+| Building a Process Route | `references/components/process_route_component.md` |
+| JSON profile | `references/components/json_profile_component.md` |
+| XML profile | `references/components/xml_profile_component.md` |
+| Flat File/CSV profile | `references/components/flat_file_profile_component.md` |
+| EDI profile | `references/components/edi_profile_component.md` |
+| Database profile | `references/components/database_profile_component.md` |
+| Map component | `references/components/map_component.md` |
+| Map functions | `references/components/map_component_functions.md` |
+| Map scripting component | `references/components/map_script_component.md` |
+| REST connection | `references/components/rest_connection_component.md` |
+| REST operation | `references/components/rest_connector_operation_component.md` |
+| HTTP Client (only if explicitly requested) | `references/components/http_client_component.md` |
+| Database V2 connection | `references/components/databasev2_connection_component.md` |
+| Database V2 operation | `references/components/databasev2_connector_operation_component.md` |
+| Database (Legacy) connection | `references/components/database_connection_component.md` |
+| Database (Legacy) operation | `references/components/database_connector_operation_component.md` |
+| Event Streams connection | `references/components/event_streams_connection_component.md` |
+| Event Streams listen operation | `references/components/event_streams_listen_operation_component.md` |
+| Event Streams consume operation | `references/components/event_streams_consume_operation_component.md` |
+| Event Streams produce operation | `references/components/event_streams_produce_operation_component.md` |
+| Salesforce connection | `references/components/salesforce_connection_component.md` |
+| Salesforce operation | `references/components/salesforce_connector_operation_component.md` |
+| Disk V2 connection | `references/components/diskv2_connection_component.md` |
+| Disk V2 operation | `references/components/diskv2_connector_operation_component.md` |
+| MFT connection | `references/components/mft_connection_component.md` |
+| MFT operation | `references/components/mft_connector_operation_component.md` |
+| Mail (IMAP) connection | `references/components/mail_imap_connection_component.md` |
+| Mail (IMAP) operation | `references/components/mail_imap_connector_operation_component.md` |
+| WSS operation (API endpoint on atom) | `references/components/web_services_server_start_shape_operation.md` |
+| API Service component (Advanced atom) | `references/components/api_service_component.md` |
+| Flow Service component | `references/components/flow_service_component.md` |
+| MCP Server connection | `references/components/mcp_server_connection_component.md` |
+| MCP Server operation | `references/components/mcp_server_operation_component.md` |
+| Trading partner (B2B/EDI) | `references/components/trading_partner_component.md` |
+| Cross Reference Table | `references/components/cross_reference_table_component.md` |
+| Process Property | `references/components/process_property_component.md` |
+| Document Cache | `references/components/document_cache_component.md` |
+| Environment Extensions | `references/components/process_extensions.md` |
+| Custom connector | `references/components/custom_connector_connection_component.md` |
+
+### Step References — Read Before Adding That Step to a Process
+| Step | Read This File |
+|---|---|
+| Start (any type) | `references/steps/start_step.md` |
+| REST Connector step | `references/steps/rest_connector_step.md` |
+| Database V2 step | `references/steps/databasev2_connector_step.md` |
+| Database Legacy step | `references/steps/database_connector_step.md` |
+| Disk V2 step | `references/steps/diskv2_connector_step.md` |
+| MFT step | `references/steps/mft_connector_step.md` |
+| Mail (IMAP) step | `references/steps/mail_imap_connector_step.md` |
+| Event Streams step | `references/steps/event_streams_steps.md` |
+| Salesforce step | `references/steps/salesforce_connector_step.md` |
+| Custom connector step | `references/steps/custom_connector_step.md` |
+| AI Agent step | `references/steps/agent_step.md` |
+| Map step | `references/steps/map_step.md` |
+| Message step | `references/steps/message_step.md` |
+| Set Properties step | `references/steps/set_properties_step.md` |
+| Data Process step | `references/steps/data_process_step.md` |
+| Groovy in Data Process | `references/steps/data_process_groovy_step.md` |
+| Decision step | `references/steps/decision_step.md` |
+| Route step (3+ paths) | `references/steps/route_step.md` |
+| Branch step | `references/steps/branch_step.md` |
+| Flow Control step | `references/steps/flow_control_step.md` |
+| Process Call (subprocess) | `references/steps/process_call_step.md` |
+| Process Route step | `references/steps/process_route_step.md` |
+| Try/Catch step | `references/steps/try_catch_step.md` |
+| Exception step | `references/steps/exception_step.md` |
+| Notify step (debug logging) | `references/steps/notify_step.md` |
+| Return Documents step | `references/steps/return_documents_step.md` |
+| Stop step | `references/steps/stop_step.md` |
+| Document Cache steps | `references/steps/document_cache_steps.md` |
+| Trading partner steps | `references/steps/trading_partner_steps.md` |
+| Flow Services start | `references/steps/fss_start_step.md` |
+| MCP Server start | `references/steps/mcp_server_start_step.md` |
+| Canvas shape notes | `references/steps/shape_notes.md` |
+
+### Guide References — Read for Workflows and Patterns
+| Topic | Read This File |
+|---|---|
+| Testing processes after deploy | `references/guides/process_testing_guide.md` |
+| Converting process to API / WSS listeners | `references/guides/api_conversion_patterns.md` |
+| Common integration patterns (recipes) | `references/guides/boomi_patterns.md` |
+| Error patterns and troubleshooting | `references/guides/boomi_error_reference.md` |
+| Problem solving / unknown components | `references/guides/problem_solving_guide.md` |
+| Platform services overview | `references/guides/boomi_platform_reference.md` |
+| Pulling existing components | `references/guides/pulling_components.md` |
+| First-time user setup | `references/guides/user_onboarding_guide.md` |
+| CLI tool usage | `references/guides/cli_tool_reference.md` |
+| Branch and merge | `references/guides/branch_merge_guide.md` |
+| Version management | `references/guides/version_management_guide.md` |
+| Event Streams REST API | `references/guides/event_streams_rest_api.md` |
+| EDI ↔ SAP IDoc patterns | `references/guides/edi_sap_patterns.md` |
+
+### Platform Entity References
+| Topic | Read This File |
+|---|---|
+| B2B/EDI architecture | `references/platform_entities/edi_b2b.md` |
+| Event Streams topics/subscriptions | `references/platform_entities/event_streams.md` |
+| Boomi for SAP | `references/platform_entities/boomi_for_sap.md` |
+| Boomi Flow | `references/platform_entities/flow.md` |
+| MCP Server | `references/platform_entities/mcp_server.md` |
+| Shared Web Server (WSS auth/URL) | `references/platform_entities/shared_web_server.md` |
+
+### Multi-File Workflows (read ALL files listed)
+These tasks require consulting multiple reference files together:
+
+| Task | Files to Load |
+|---|---|
+| REST API on Atom (WSS) | `BOOMI_THINKING.md` + `process_component.md` + `web_services_server_start_shape_operation.md` + `rest_connector_step.md` + `api_conversion_patterns.md` |
+| REST API on Advanced Atom | `BOOMI_THINKING.md` + `api_service_component.md` + `web_services_server_start_shape_operation.md` + `process_component.md` + `api_conversion_patterns.md` |
+| Map transformation | `map_component.md` + `map_component_functions.md` + relevant profile docs |
+| Event Streams pub/sub | `event_streams_connection_component.md` + `event_streams_listen_operation_component.md` (or consume/produce) + `event_streams_steps.md` + `platform_entities/event_streams.md` |
+| B2B/EDI Trading Partner | `trading_partner_component.md` + `trading_partner_steps.md` + `edi_profile_component.md` + `platform_entities/edi_b2b.md` |
+| Database integration | `databasev2_connection_component.md` + `databasev2_connector_operation_component.md` + `databasev2_connector_step.md` |
+| Email send/receive | `mail_imap_connection_component.md` + `mail_imap_connector_operation_component.md` + `mail_imap_connector_step.md` |
+| Document caching | `document_cache_component.md` + `document_cache_steps.md` |
+
+**If a reference file does not exist yet** (not yet cloned), note it and proceed using the structural knowledge in `references/boomi_component_guide.md` and `references/BOOMI_THINKING.md` as fallback.
 
 ---
 
@@ -335,46 +481,64 @@ When generating any component name, apply this table first. Flag any name that d
 
 ## What You Must NEVER Do
 
-- Generate Boomi XML containing real credentials, IPs, or PII
+- Generate all component XML at once before pushing any of them — push-as-you-go is mandatory
+- Use PLACEHOLDER GUIDs, made-up GUIDs, or `PLACEHOLDER_*` values in component XML — use empty strings or real GUIDs only
+- Use `${ENV_VAR}` syntax in any XML that will be pushed — Boomi does not substitute these
+- Create a process before its profile, connection, and operation dependencies are pushed and GUIDs captured
 - Proceed with migration without the user typing `YES MIGRATE`
 - Generate deployment commands that skip the STG environment
 - Claim a RED-scored module can be migrated without strong user-acknowledged caveats
 - Generate Groovy using Java 11+ syntax (Boomi uses Groovy 2.4)
-- Suggest a Boomi Custom Connector when an existing connector type covers the use case
-- Generate processes that bypass the APIM layer for external-facing APIs
+- Use `connectorType="http"` (HTTP Client) unless user explicitly requests it — always use REST connector
 - Use `valueType="track"` expecting it to read DPPs — it only reads DDPs
-- Use isempty/isnotempty/contains in Decision step — invalid operators
-- Omit `<dragpoints>` from any shape
-- Make external network calls from Groovy scripts — sandbox blocks this; use connector steps
+- Use isempty/isnotempty/contains in Decision step — invalid operators, use `equals` with empty value
+- Omit `<dragpoints>` from any step — every step requires it
+- Make external network calls from Groovy scripts — Groovy sandbox blocks this
 - Wire two source mappings into the same destination field in a Map
-- Pre-base64-encode `BOOMI_API_TOKEN` in `.env` — store it raw; encoding happens at runtime
+- Pre-base64-encode `BOOMI_API_TOKEN` in `.env` — store raw token, encoding happens at runtime
+- Use `shapetype="setproperties"` in Set Properties step — correct value is `shapetype="documentproperties"`
+- Add child elements to a Map step beyond `<map mapId="guid"/>` — map step takes only the ID reference
+- Omit `<bns:XMLFlavor><bns:CustomStandardFlavor/></bns:XMLFlavor>` from XML profiles — required or profile fails validation
+- Generate processes that bypass the APIM layer for external-facing APIs
 
 ---
 
 ## Reference: Boomi Component XML Structure
 
+See `references/boomi_component_guide.md` for complete, correct XML for every component type.
+
+**Key principle:** `componentId=""` and `version="-1"` for CREATE operations.
+The platform assigns a real GUID on push. Never invent a GUID.
+
 ```xml
-<bns:Component 
+<!-- PROCESS COMPONENT — minimum valid structure -->
+<bns:Component
   xmlns:bns="http://api.platform.boomi.com/"
+  componentId=""
+  folderId="ACTUAL_FOLDER_GUID"
   name="API_GET_Policy"
   type="process"
-  subType="General"
-  folderId="PLACEHOLDER_FOLDER_ID">
+  version="-1">
   <bns:object>
-    <bns:ProcessDefinition 
-      allowSimultaneous="false"
-      enableUserLog="false"
-      processLogOnErrorOnly="false"
-      purgeDataImmediately="false"
-      updateRunDates="true"
-      workload="general">
-      <!-- Shapes go here — every shape MUST have <dragpoints> -->
+    <bns:ProcessDefinition
+        allowSimultaneous="false"
+        enableUserLog="false"
+        processLogOnErrorOnly="false"
+        purgeDataImmediately="false"
+        updateRunDates="true"
+        workload="general">
+      <bns:shapes>
+        <!-- Every step MUST have <dragpoints> -->
+        <!-- Use ONLY real GUIDs from already-pushed components -->
+        <!-- Never use PLACEHOLDER_* values -->
+      </bns:shapes>
     </bns:ProcessDefinition>
   </bns:object>
 </bns:Component>
 ```
 
-Trading Partner Start processes: set `allowSimultaneous="true"` (required).
+**Trading Partner Start processes:** `allowSimultaneous="true"` required.
+**High-volume production:** `processLogOnErrorOnly="true"` recommended.
 
 ---
 

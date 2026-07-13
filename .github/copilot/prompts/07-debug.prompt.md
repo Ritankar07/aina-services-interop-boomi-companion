@@ -15,24 +15,25 @@ python scripts/boomi_logs.py --process-name "PROCESS-NAME" --status ERROR --hour
 
 ## Step 3: Known Error Pattern Reference
 
+**Read `references/boomi_error_reference.md` first** — it contains the complete, sourced error pattern table. Quick reference of the most common ones:
+
 | Error Pattern | Root Cause | Fix |
 |---|---|---|
-| `NullPointerException` in Map | Source field null, no null-check | Add Decision before Map, or null-check function |
-| `Connection refused` | Wrong URL/firewall/credentials | Check connection component; verify STG endpoint; check NSG rules |
-| `401 Unauthorized` (outbound) | API key expired/wrong | Re-check connection extension credentials |
-| `Could not find document` | Empty input | Add empty-document check at Start |
-| Shape did not execute | Missing `<dragpoints>` on the shape | Regenerate XML with dragpoints on every shape |
-| DPP value is null | `valueType="track"` used for a DPP | Use `valueType="process"` + `<processparameter>` — `track` only reads DDPs |
-| Empty-check always fails in Decision | `isempty`/`isnotempty`/`contains` used | These don't exist — use `equals` with empty static value |
-| Groovy makes no external call | Sandbox blocks network calls | Move logic to a connector step |
-| XML profile fails PUT/POST | Missing `<XMLFlavor>` | Add `<XMLFlavor><CustomStandardFlavor/></XMLFlavor>` |
-| Subprocess change has no effect | Parent not redeployed | Redeploy the **parent** process too |
-| Log download returns 204/202 | Log still generating | Retry — `boomi_logs.py` already retries 5x automatically |
-| Listener crashes on startup | `allowSimultaneous` misconfigured | Check process options for the listener type |
-| Map field shows wrong value | Two sources wired to same destination | Only one connection allowed per destination field — find and remove the duplicate |
-| Default value always overriding source | Misunderstanding of default behavior | Default only fires when source is null/blank, unless no source is mapped at all |
-| `MOVED` error | Redis clustering issue (Azure Cache) | Check atom/molecule Redis config; escalate to infra |
-| `Invalid XML/JSON profile` | Input doesn't match declared schema | Re-generate profile from live data sample |
+| Variable appears as `{1}` literally in output | JSON quote escaping in Message step | Wrap JSON body in single quotes, use `'"'{1}'"'` pattern |
+| Connection auth fails, credentials look right | `${ENV_VAR}` in XML — not substituted | Use empty strings in XML, configure via Environment Extensions |
+| Subprocess change ignored | Parent not redeployed | Push subprocess → push parent → deploy parent |
+| Set Properties does nothing | `shapetype="setproperties"` wrong | Use `shapetype="documentproperties"` |
+| Property value is null | Wrong valueType | DPP = `valueType="process"`, DDP = `valueType="track"` |
+| Map step validation error | Child elements on map step | Only `<map mapId="guid"/>`, no children |
+| Component pushed, step does nothing | Missing `<dragpoints>` | Add dragpoints to every step |
+| Runtime "component not found" | PLACEHOLDER GUIDs in process XML | Push all dependencies first, use real GUIDs |
+| No output, no error | Zero documents from a step | Add Notify steps to trace the pipeline |
+| 204 on log download | Log still generating | boomi_logs.py retries automatically — wait or retry |
+| Groovy network call fails | Sandbox blocks network | Move to REST Connector step |
+| Trading Partner blocks concurrent runs | `allowSimultaneous="false"` | Set to `true` for TP start processes |
+| XML profile fails PUT/POST | Missing XMLFlavor element | Add `<XMLFlavor><CustomStandardFlavor/></XMLFlavor>` |
+
+See `references/boomi_error_reference.md` for full details on all 15 patterns.
 
 ## Step 4: Produce Diagnosis
 

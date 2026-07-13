@@ -38,7 +38,15 @@ VS Code → Settings (Ctrl+,) → search `chat.promptFiles` → enable → resta
 
 Verify: open Copilot Chat (Ctrl+Shift+I), type `/` — you should see `repo-connect`, `analyze`, `select-apis`, `feasibility`, `plan`, `migrate`, `mapping`, `document`, `unittest`, `debug`, `pull-component`, `marketplace`, `tidy`.
 
-### A5. Populate preferred_connections.md
+### A5. Boomi Reference Documentation
+
+The `references/` folder is already fully populated in the repo — 100 official Boomi
+Companion reference files sourced from `OfficialBoomi/bc-integration`.
+No setup step required. They are committed and always present.
+
+---
+
+### A6. Populate preferred_connections.md
 Add your existing AtomSphere connections (name, type, system, auth, environments) so Plan Mode can mark them REUSE instead of recreating them.
 
 ---
