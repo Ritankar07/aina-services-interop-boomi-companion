@@ -207,7 +207,7 @@ GUI-created XML profiles return an empty `<XMLFlavor/>` on GET, which fails sche
 |---|---|
 | `KafkaProducer.send()` | Event Streams Connector (PUBLISH) |
 | `@KafkaListener` / consumer group | Event Streams Connector (SUBSCRIBE) + Start (Listen trigger) |
-| Topic naming | `[DOMAIN]-[DIRECTION]-[EVENT]`, same convention as process names |
+| Topic naming | `ROUTE_<Domain>_<Event>` pattern for process routes; topics follow the same domain/entity vocabulary |
 
 Event Streams is a separate Boomi service from JMS — do not conflate the two connector types.
 
@@ -281,6 +281,38 @@ Real-time ML inference, complex algorithm execution, WebSocket/SSE, UI rendering
 
 ---
 
+## Component Naming Conventions
+
+These naming standards apply to **every** component generated or modified in this workspace. They are the default and must be followed unless the user explicitly overrides them.
+
+| Component | Pattern | Example |
+|---|---|---|
+| **API Service** | `<Domain> <API Name> API` | `Policy Management API` |
+| **API Proxy** | `<API Name> Proxy` | `Policy Proxy` |
+| **Main Process** | `API_<Verb>_<Resource>` | `API_GET_Policy` |
+| **Subprocess** | `SUB_<Purpose>` | `SUB_InvokeGuidewire` |
+| **Process Route** | `ROUTE_<Purpose>` | `ROUTE_PolicyOperations` |
+| **Map** | `MAP_<Source>_TO_<Target>` | `MAP_Request_TO_GWPolicy` |
+| **XML/JSON Profile** | `<Entity>_<Direction>_<Format>` | `Policy_Request_JSON` |
+| **Connection** | `CONN_<System>` | `CONN_Guidewire` |
+| **Operation** | `<Action>_<Object>` | `GET_Policy`, `UPSERT_Claim` |
+| **Process Property** | `PP_<Purpose>` | `PP_API_Config` |
+| **Environment Extension** | `EXT_<Property>` | `EXT_BaseURL` |
+| **Cross Reference Table** | `XREF_<Source>_<Target>` | `XREF_ProductCode` |
+| **Document Cache** | `CACHE_<Purpose>` | `CACHE_AccessToken` |
+
+**Naming rules:**
+- Separator: underscore `_` (never hyphen for the above types)
+- Casing within segments: PascalCase (e.g. `ClaimStatus`, `GWPolicy`)
+- Profile `<Direction>` values: `Request`, `Response`, `Inbound`, `Outbound`
+- Profile `<Format>` values: `JSON`, `XML`, `CSV`, `Flat`
+- Process `<Verb>` values: `GET`, `POST`, `PUT`, `DELETE`, `PATCH`, `UPSERT`, `PROCESS`
+- Connection name = target system name only, no protocol suffix (`CONN_Guidewire` not `CONN_Guidewire_REST`)
+
+When generating any component name, apply this table first. Flag any name that does not conform and suggest a compliant alternative before generating XML.
+
+---
+
 ## Output Format Requirements
 
 ### Analysis Report
@@ -324,7 +356,7 @@ Real-time ML inference, complex algorithm execution, WebSocket/SSE, UI rendering
 ```xml
 <bns:Component 
   xmlns:bns="http://api.platform.boomi.com/"
-  name="DOMAIN-DIRECTION-SYSTEM-TYPE"
+  name="API_GET_Policy"
   type="process"
   subType="General"
   folderId="PLACEHOLDER_FOLDER_ID">

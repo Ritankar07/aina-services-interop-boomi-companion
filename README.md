@@ -34,6 +34,7 @@ Then in VS Code: **Settings → search `chat.promptFiles` → enable → restart
 | `/select-apis` | Pick which scored APIs to migrate **and** confirm the migration decision (YES MIGRATE) |
 | `/plan` | Full build blueprint before any XML is generated |
 | `/migrate` | Generate Boomi XML for the locked, approved scope (prompts for folder) |
+| `/push` | **Push generated components to Boomi account** — no deployment, review first |
 | `/mapping` | Build or fix a Boomi Map component — standalone or auto-invoked by `/migrate` |
 | `/document` | TDD, Runbook, API Reference → Confluence or Markdown |
 | `/unittest` | Test cases + Boomi Test mode checklist |

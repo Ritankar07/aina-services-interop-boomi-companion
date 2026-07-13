@@ -105,6 +105,7 @@ If it fails, run `/debug` — checks the known-error table first, then diagnosti
 | `/migrate` | 5 |
 | `/mapping` | 5b |
 | `/document` / `/unittest` | 6 |
+| `/push` | 6b — push generated XML to Boomi account, get component IDs, no deployment |
 | `boomi_push.py --file [xml]` | 7a — push component to Boomi account, get component ID |
 | `boomi_deploy.py --component-id [ID] --env STG` | 7b — package + deploy to STG |
 | `boomi_deploy.py --component-id [ID] --env PROD` | 7c — promote to PROD |

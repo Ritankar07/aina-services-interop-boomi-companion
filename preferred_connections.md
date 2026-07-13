@@ -13,7 +13,7 @@
 #   notes: [anything useful for the AI when deciding to reuse]
 # ──────────────────────────────────────────────────────────────────
 
-## CONN-POSTGRES-CLAIMS-JDBC
+## CONN_Postgres_Claims
 type: Database
 system: PostgreSQL — Claims database
 protocol: JDBC
@@ -21,7 +21,7 @@ auth: Username/Password (via environment extension)
 environments: STG, PROD
 notes: Shared DB connection for all CLAIMS domain processes. Use for any PostgreSQL query/execute in the claims schema.
 
-## CONN-IMRIGHT-REST-V2
+## CONN_ImageRight
 type: HTTP Client
 system: ImageRight Document Management
 protocol: REST
@@ -29,7 +29,7 @@ auth: API Key (X-API-Key header, via environment extension)
 environments: STG, PROD
 notes: ImageRight REST API v2. Always reuse this — never create a duplicate ImageRight connection.
 
-## CONN-GHOSTDRAFT-REST
+## CONN_GhostDraft
 type: HTTP Client
 system: GhostDraft Template Engine
 protocol: REST
@@ -37,7 +37,7 @@ auth: OAuth2 Client Credentials (via environment extension)
 environments: STG, PROD
 notes: GhostDraft document generation endpoint.
 
-## CONN-AZURE-SERVICEBUS-JMS
+## CONN_AzureServiceBus
 type: JMS
 system: Azure Service Bus
 protocol: AMQP (JMS wrapper)
@@ -45,7 +45,7 @@ auth: SAS Token (via environment extension)
 environments: STG, PROD
 notes: Event-driven processes. Reuse for any Azure Service Bus publish/subscribe.
 
-## CONN-SFTP-MFT-GOANY
+## CONN_GoAnywhere
 type: FTP/SFTP
 system: GoAnywhere MFT
 protocol: SFTP
@@ -53,7 +53,7 @@ auth: SSH Key (via environment extension)
 environments: STG, PROD
 notes: GoAnywhere MFT endpoint for secure file transfer.
 
-## CONN-SALESFORCE-REST
+## CONN_Salesforce
 type: Salesforce
 system: Salesforce CRM
 protocol: REST (Salesforce connector)

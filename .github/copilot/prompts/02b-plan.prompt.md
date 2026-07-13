@@ -22,44 +22,65 @@ Source   : [source filename/module]   Language : [Java/.NET/Python]
 Scope    : [GREEN only / GREEN+AMBER / specific modules]
 
 📁 FOLDER STRUCTURE
+
+Each API gets its own subfolder named after its main process.
+Files from different migration runs are never overwritten.
+
 migration-output/boomi-processes/
-└── [MAIN-PROCESS-NAME]/
-    ├── [PROCESS-NAME].xml
-    ├── [CONNECTION-NAME].xml
-    ├── [PROFILE-NAME-IN].xml
-    ├── [PROFILE-NAME-OUT].xml
-    ├── [MAP-NAME].xml
-    ├── [APIM-DEFINITION].xml      (if applicable)
-    └── [PROCESS-NAME]-MIGRATION-NOTES.md
+├── API_[Verb]_[Resource]/              ← one folder per migrated API
+│     API_[Verb]_[Resource].xml         e.g. API_GET_Policy.xml
+│     SUB_[Purpose].xml                 e.g. SUB_InvokeGuidewire.xml  (if any)
+│     CONN_[System].xml                 e.g. CONN_Guidewire.xml        (CREATE only)
+│     [Entity]_Request_[Format].xml     e.g. Policy_Request_JSON.xml
+│     [Entity]_Response_[Format].xml    e.g. Policy_Response_JSON.xml
+│     MAP_[Source]_TO_[Target].xml      e.g. MAP_Request_TO_GWPolicy.xml
+│     [Domain] [API Name] API.xml       e.g. Policy_Management_API.xml (if APIM)
+│     [API Name] Proxy.xml              e.g. Policy_Proxy.xml          (if APIM)
+│     API_[Verb]_[Resource]-MIGRATION-NOTES.md
+│
+├── API_[Verb]_[Resource2]/             ← second API — its own folder
+│     ...
+│
+└── API_[Verb]_[Resource3]/             ← third API — its own folder
+      ...
 
 🔌 CONNECTIONS
-  ✅ REUSE : [ConnectionName] — matched from preferred_connections.md
-  🆕 CREATE: [ConnectionName] ([connector type] — [why])
+  ✅ REUSE : [CONN_System] — matched from preferred_connections.md
+  🆕 CREATE: [CONN_System] ([connector type] — [why])
 
 📊 PROFILES
-  🆕 [ProfileName] ([JSON/XML/CSV/Flat File/DB])
-     Direction: IN/OUT   Source: [system]   Fields: ~[N]   Complexity: LOW/MEDIUM/HIGH
+  🆕 [Entity_Direction_Format]  e.g. Policy_Request_JSON
+     Direction: Request/Response/Inbound/Outbound
+     Format: JSON/XML/CSV/Flat
+     Source: [system]   Fields: ~[N]   Complexity: LOW/MEDIUM/HIGH
 
 🗺️  MAP COMPONENTS
-  🆕 [MapName]
-     Source: [Profile]  Target: [Profile]
+  🆕 MAP_[Source]_TO_[Target]   e.g. MAP_Request_TO_GWPolicy
+     Source Profile : [Entity_Direction_Format]
+     Target Profile : [Entity_Direction_Format]
      Direct mappings: [N]   Functions needed: [Lookup/Date/Concat/Script]
      Complexity: LOW/MEDIUM/HIGH
 
-⚙️  PROCESS SHAPES — [PROCESS-NAME]
+⚙️  PROCESS SHAPES — [API_Verb_Resource]
   1. Start          [trigger: API Service/Schedule/Listen/Manual]
   2. Try/Catch
-    3.   Connector  [GET/SEND/QUERY/EXECUTE — name — operation]
-    4.   Map        [map component name]
+    3.   Connector  [GET/SEND/QUERY/EXECUTE — CONN_System — OperationName]
+    4.   Map        [MAP_Source_TO_Target]
   Catch:
     5.   Exception  [error format/HTTP code]
 
+  [Sub-processes use SUB_ prefix, Process Routes use ROUTE_ prefix]
+  [Process Properties named PP_Purpose, Document Caches named CACHE_Purpose]
+  [Cross Reference Tables named XREF_Source_Target, Operations named Action_Object]
+
 📡 BOOMI APIM DEFINITION (if APIs exposed)
-  API Component: [name]   Path: [METHOD /api/v{n}/...]
-  Auth: Entra ID JWT   Linked Process: [name]
+  API Service : [Domain] [API Name] API  e.g. Policy Management API
+  API Proxy   : [API Name] Proxy          e.g. Policy Proxy
+  Path        : [METHOD /api/v{n}/...]
+  Auth        : Entra ID JWT   Linked Process: [API_Verb_Resource]
 
 🚀 DEPLOYMENT TARGET
-  Folder         : [pending — confirmed in /migrate Step 6]
+  Folder         : [pending — confirmed in /migrate Step 5]
   Atom           : [BOOMI_TEST_ATOM_ID from .env]
   First deploy to: STG (BOOMI_ENVIRONMENT_ID_STG)
   Promote to     : PROD (manual, after sign-off)

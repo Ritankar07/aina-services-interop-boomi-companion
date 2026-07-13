@@ -117,7 +117,7 @@ CROSS REFERENCE TABLE: [Name]
 
 Produce the Map component XML following the structure in `copilot-instructions.md`'s XML reference, with the field mapping matrix from Step 2 fully wired, functions from Step 4 embedded, and any Cross Reference Table referenced as a parameter source.
 
-Save as: `migration-output/boomi-processes/[ProcessName]/MAP-[FROM]-TO-[TO].xml`
+Save as: `migration-output/boomi-processes/[ProcessName]/MAP_[Source]_TO_[Target].xml`
 
 ---
 
@@ -148,7 +148,7 @@ If the user reports a mapping problem:
 
 After completing a mapping task, always end with:
 ```
-Map component ready: MAP-[FROM]-TO-[TO]
+Map component ready: MAP_[Source]_TO_[Target]
   Direct mappings    : [N]
   Functions used     : [N] ([Standard]/[User-Defined]/[Custom Script breakdown])
   Cross Reference    : [N] tables referenced
