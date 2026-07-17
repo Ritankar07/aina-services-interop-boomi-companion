@@ -23,10 +23,76 @@ Wait for both answers before generating.
 ## Templates
 
 ### TDD
-Sections: Document Control, Executive Summary, Architecture Overview (pattern, runtime, trigger, auth, Interop Layer placement), Component Inventory, Data Flow (numbered steps), Data Mapping (reference the Mapping Skill matrix from `/mapping`), Error Handling, Security Considerations, Non-Functional Requirements, Deployment Notes, Open Items/Risks.
+Sections: Document Control, Executive Summary, Architecture Overview (pattern, runtime, trigger, auth, Interop Layer placement), Component Inventory, **Data Flow Diagram (text + arrows — see spec below)**, Numbered Steps, Data Mapping (reference the Mapping Skill matrix from `/mapping`), Error Handling, Security Considerations, Non-Functional Requirements, Deployment Notes, Open Items/Risks.
+
+**Data Flow Diagram spec (required in every TDD and Integration Spec):**
+
+Generate a text-based data flow inside a Confluence `noformat` macro. Use plain ASCII characters (`|`, `v`, `-->`) so it renders correctly in any Confluence theme.
+
+Confluence Storage Format:
+```xml
+<ac:structured-macro ac:name="noformat">
+<ac:plain-text-body><![CDATA[
+[Source / Caller]
+    |
+    | HTTPS + JWT Bearer Token
+    v
+Boomi APIM Gateway
+    |-- JWT Validation (Entra ID)
+    |-- Rate Limiting
+    |
+    | Internal routing
+    v
+[Main Process Name]  (Boomi AtomSphere)
+    |
+    | [protocol] [method] [path]
+    v
+[CONN_SystemName]  -->  [Target System / External API]
+    |
+    | [Response format, e.g. JSON]
+    v
+[MAP_Source_TO_Target]  (Data Transformation)
+    |
+    v
+Response returned to [Source / Caller]
+]]></ac:plain-text-body>
+</ac:structured-macro>
+```
+
+Fill in the actual values from the migration. Examples:
+- Source: `Client Application`, `Scheduled Trigger`, `Event Stream`
+- Protocol line: `REST GET /api/v1/policies/{policyId}`, `SFTP file write`, `JMS message publish`
+- Target: `Guidewire Core`, `ImageRight REST API`, `PostgreSQL Claims DB`
+
+For multi-step processes, show each intermediate step:
+```
+[Source]
+    |
+    v
+APIM Gateway --> JWT validation
+    |
+    v
+API_GET_Policy
+    |
+    |--> CONN_Guidewire --> Guidewire API (GET /policies/{id})
+    |         |
+    |         v
+    |    Response (Policy JSON)
+    |
+    v
+MAP_GWPolicy_TO_Canonical (transform)
+    |
+    v
+Response to Client (Canonical JSON)
+```
+
+For error paths, add a branch:
+```
+    |--> [On Error] Try/Catch --> Exception Step --> HTTP 502 to Client
+```
 
 ### Integration Specification
-Integration Identity, Interface Contract (direction/protocol/frequency/SLA), Source System Details, Target System Details, Payload Spec (request/response examples), Field Mapping Matrix, Error Codes, Test Endpoints.
+Integration Identity, Interface Contract (direction/protocol/frequency/SLA), Source System Details, Target System Details, **Data Flow Diagram (same text+arrow format as TDD — required)**, Payload Spec (request/response examples), Field Mapping Matrix, Error Codes, Test Endpoints.
 
 ### Operations Runbook
 Service Overview, Health Checks, Common Errors & Resolutions (include: empty document body, 401 token expiry, Atom offline, dragpoints missing, subprocess not redeployed), Restart Procedure, Reprocessing Failed Documents, Deployment Runbook, Rollback Procedure, Contacts.

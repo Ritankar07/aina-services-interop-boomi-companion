@@ -254,8 +254,9 @@ After ALL XML files are written to disk, output this menu exactly:
 ║           ✅  COMPONENTS READY                               ║
 ╚══════════════════════════════════════════════════════════════╝
 
-Generated files:
-  migration-output/boomi-processes/[API_Verb_Resource]/
+Generated files (folder name = SourceClass + API name for quick identification):
+  migration-output/boomi-processes/ClaimsController_API_GET_Policy/
+  migration-output/boomi-processes/OrderService_API_POST_Order/
   [one line per API folder created]
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

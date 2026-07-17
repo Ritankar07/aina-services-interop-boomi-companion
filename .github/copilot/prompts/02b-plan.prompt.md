@@ -27,8 +27,9 @@ Each API gets its own subfolder named after its main process.
 Files from different migration runs are never overwritten.
 
 migration-output/boomi-processes/
-├── API_[Verb]_[Resource]/              ← one folder per migrated API
-│     API_[Verb]_[Resource].xml         e.g. API_GET_Policy.xml
+├── [SourceClass]_API_[Verb]_[Resource]/   ← SourceClass + API name for quick identification
+│     e.g. ClaimsController_API_GET_Policy/
+│     API_[Verb]_[Resource].xml            e.g. API_GET_Policy.xml
 │     SUB_[Purpose].xml                 e.g. SUB_InvokeGuidewire.xml  (if any)
 │     CONN_[System].xml                 e.g. CONN_Guidewire.xml        (CREATE only)
 │     [Entity]_Request_[Format].xml     e.g. Policy_Request_JSON.xml
@@ -102,7 +103,81 @@ migration-output/boomi-processes/
 Apply requested changes, re-display the full updated plan, ask again.
 
 ## Handling APPROVE PLAN
-"Plan approved. Run `/migrate` to generate components as planned." Save to `migration-output/boomi-processes/[PROCESS-NAME]-APPROVED-PLAN.md`.
+
+On `APPROVE PLAN`, do all three things:
+
+1. Confirm to the user: "Plan approved. Run `/migrate` to generate components."
+
+2. Create the **API-specific output folder** immediately using this naming convention:
+   `migration-output/boomi-processes/[SourceClass]_API_[Verb]_[Resource]/`
+   Example: `ClaimsController_API_GET_Policy/`
+
+   - `[SourceClass]` = the Java class / .NET controller / Python router the API came from
+   - `API_[Verb]_[Resource]` = the main process name following the naming convention
+   - This groups related APIs from the same service together when sorted alphabetically
+
+3. Save the **Migration Plan document** to that folder:
+   `migration-output/boomi-processes/[SourceClass]_API_[Verb]_[Resource]/MIGRATION_PLAN.md`
+
+   Use this structure:
+
+   ```markdown
+   # Migration Plan
+   **API**: [Method] [Path]
+   **Source**: [SourceClass] ([file path])
+   **Approved**: [YYYY-MM-DD HH:MM]
+   **Target Platform**: Boomi AtomSphere + APIM
+
+   ---
+
+   ## Folder
+   migration-output/boomi-processes/[SourceClass]_API_[Verb]_[Resource]/
+
+   ## Components to Create
+
+   ### Connections
+   | Name | Type | Action |
+   |---|---|---|
+   | [CONN_System] | connector-settings | CREATE / REUSE |
+
+   ### Profiles
+   | Name | Type | Direction |
+   |---|---|---|
+   | [Entity_Direction_Format] | profile.json / profile.xml | IN / OUT |
+
+   ### Maps
+   | Name | Source Profile | Target Profile |
+   |---|---|---|
+   | [MAP_Source_TO_Target] | [profile] | [profile] |
+
+   ### Process Shapes
+   | # | Step Name | Shape Type | Notes |
+   |---|---|---|---|
+   | 1 | Start | start | [trigger type + path] |
+   | 2 | [name] | [type] | [connector + operation] |
+   | 3 | [name] | map | [map component name] |
+   | 4 | Return | return | — |
+
+   ## Deployment Target
+   | Property | Value |
+   |---|---|
+   | Boomi Folder | [path — to be confirmed in /migrate] |
+   | Atom | [BOOMI_TEST_ATOM_ID from .env] |
+   | First deploy | STG |
+   | Promote to | PROD (after STG sign-off) |
+
+   ## Build Summary
+   | Item | Count |
+   |---|---|
+   | Total components | [N] |
+   | New to create | [N] |
+   | Reused from platform | [N] |
+   | Groovy scripts | [N] |
+   | Complexity | LOW / MEDIUM / HIGH |
+
+   ## Risks
+   [bullet list from plan output]
+   ```
 
 ## Handling CANCEL PLAN
 "Plan cancelled. No components generated. Run `/plan` again when ready."

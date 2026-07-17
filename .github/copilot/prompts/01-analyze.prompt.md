@@ -92,3 +92,65 @@ Run /select-apis next to choose which APIs to migrate from this scored list.
 - Skip files with no API endpoints silently (DTOs, utility classes)
 - Scheduled jobs and event consumers get numbers and scores too
 - Be honest in scoring — this list is what the user picks from, so an inflated GREEN score leads to a bad selection downstream
+
+---
+
+## Save Analysis Report to Disk
+
+After generating the scored API inventory, immediately save it as a markdown file:
+
+**File:** `migration-output/analysis-reports/[RepoName]_ANALYSIS_[YYYYMMDD].md`
+
+Use this structure:
+
+```markdown
+# API Analysis Report
+**Repository**: [org/repo-name]
+**Language**: [Java / .NET / Python / Mixed]
+**Date**: [YYYY-MM-DD]
+**Scanned**: [N] source files
+
+---
+
+## Repository Profile
+| Property | Value |
+|---|---|
+| Framework | [Spring Boot 3.x / ASP.NET Core / FastAPI / etc.] |
+| Build system | [Maven / Gradle / dotnet / pip] |
+| Source files | [N] |
+| Test files | [N] (excluded) |
+
+---
+
+## API Inventory
+
+| # | Method | Path | Source Class / File | Score | Boomi Equivalent | Risk |
+|---|---|---|---|---|---|---|
+| 1 | GET | /api/v1/orders/{id} | OrderService.java | GREEN | HTTP Client Connector | — |
+| 2 | POST | /api/v1/orders/price | OrderService.java | AMBER | Data Process + Groovy | 12-branch pricing logic |
+
+---
+
+## Non-API Integration Points
+
+| # | Type | Trigger | Source File | Score | Boomi Equivalent |
+|---|---|---|---|---|---|
+| 12 | SCHEDULED | cron="0 * * * *" | BatchExportService.java | GREEN | Schedule trigger |
+
+---
+
+## Summary
+
+| Score | Count | Description |
+|---|---|---|
+| GREEN | [N] | Direct Boomi mapping, low risk |
+| AMBER | [N] | Possible with adaptation |
+| RED | [N] | Not suitable for Boomi |
+
+**Estimated effort (all GREEN + AMBER):**
+Boomi Processes: ~[N] · Map components: ~[N] · New connections: ~[N] · Groovy scripts: ~[N]
+```
+
+Tell the user:
+> "Analysis report saved to `migration-output/analysis-reports/[RepoName]_ANALYSIS_[YYYYMMDD].md`
+> Run /select-apis to choose which APIs to migrate."
