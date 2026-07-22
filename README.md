@@ -43,6 +43,7 @@ Then in VS Code: **Settings → search `chat.promptFiles` → enable → restart
 | `/pull-component` | Modify existing AtomSphere components |
 | `/marketplace` | Search Boomi Marketplace before migrating |
 | `/feasibility-detail` | Optional — deeper re-assessment of a specific API beyond the /analyze summary score |
+| `/sync-references` | Check official Boomi repo for reference updates and sync locally |
 | `/tidy` | Clean workspace artifacts |
 
 ---
